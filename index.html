@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#401b2b">
+<title>Yagona — Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#f7f4f2;--card:#fff;--ink:#261a20;--muted:#887b80;--wine:#702d49;--wine2:#401b2b;--line:#eee5e8;--soft:#f8eef2;--red:#b42318;--green:#16794b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}
+header{background:linear-gradient(120deg,var(--wine2),var(--wine));color:#fff;padding:20px max(18px,calc((100% - 1100px)/2));display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{font-weight:800;font-size:22px;letter-spacing:.5px}.sub{font-size:12px;color:#eadde2;margin-top:3px}
+main{max-width:1100px;margin:22px auto;padding:0 16px}
+.panel,.stat,.editor,.item{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 5px 20px #401b2b08}
+.login{max-width:420px;margin:8vh auto;padding:24px}.login h2{margin:0 0 6px}.muted{color:var(--muted);font-size:13px}
+input,select,textarea{width:100%;border:1px solid #e4d9de;border-radius:10px;padding:12px;background:#fff;color:var(--ink);outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--wine);box-shadow:0 0 0 3px #702d4914}
+label{display:block;font-size:13px;font-weight:650;margin:13px 0 6px}
+.btn{border:0;border-radius:10px;padding:11px 15px;background:var(--wine);color:white;font-weight:700}.btn.secondary{background:var(--soft);color:var(--wine)}.btn.dark{background:var(--wine2)}.btn.danger{background:#fff0ef;color:var(--red)}.btn:disabled{opacity:.55;cursor:wait}
+.topline{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}.topline h2{margin:0;font-size:21px}
+.tabs{display:flex;gap:8px;overflow:auto;padding:5px 0 14px}.tab{white-space:nowrap;border:1px solid var(--line);border-radius:999px;padding:10px 15px;background:white;color:var(--muted);font-weight:700}.tab.active{background:var(--wine2);border-color:var(--wine2);color:white}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:12px 0 18px}.stat{padding:15px}.stat b{display:block;font-size:24px}.stat span{font-size:12px;color:var(--muted)}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:16px;align-items:start}.list{display:grid;gap:10px}.item{padding:12px;display:flex;align-items:center;gap:12px;min-width:0}.thumb{width:68px;height:68px;object-fit:cover;border-radius:10px;background:#f2ecef;flex:none}.iteminfo{min-width:0;flex:1}.iteminfo b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.iteminfo small{color:var(--muted)}.actions{display:flex;gap:6px;flex-wrap:wrap}.actions button{padding:8px 10px;font-size:12px}
+.editor{padding:17px;position:sticky;top:12px}.editor h3{margin:0 0 4px}.editor .btn{width:100%;margin-top:12px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.checkrow{display:flex;align-items:center;gap:8px;margin-top:12px}.checkrow input{width:auto}.checkrow label{margin:0}.empty{text-align:center;padding:35px 15px;color:var(--muted);background:#fff;border:1px dashed #dfd2d8;border-radius:14px}
+.notice{padding:12px 14px;border-radius:10px;margin:12px 0;font-size:13px;background:#f8eef2;color:var(--wine2);white-space:pre-wrap}.notice.error{background:#fff0ef;color:var(--red)}.notice.ok{background:#edf8f1;color:var(--green)}
+.preview{width:100%;max-height:130px;object-fit:contain;border-radius:10px;background:#f7f4f2;margin-top:9px}
+#file{padding:9px}.small{font-size:12px;color:var(--muted)}
+@media(max-width:760px){main{margin:16px auto}.layout{grid-template-columns:1fr}.editor{position:static;grid-row:1}.stats{gap:8px}.stat{padding:12px}.stat b{font-size:20px}.item{align-items:flex-start}.actions{flex-direction:column}.actions button{padding:7px}.topline{align-items:flex-start}}
+</style>
+</head>
+<body>
+<header><div><div class="brand">YAGONA <span style="font-weight:400">ADMIN</span></div><div class="sub">Ayollar liboslari do‘koni boshqaruvi</div></div><button id="logout" class="btn secondary hidden">Chiqish</button></header>
+<main>
+<section id="loginBox" class="panel login">
+<h2>Admin panelga kirish</h2><div class="muted">Admin hisobingiz email va parolini kiriting.</div>
+<div id="loginMsg" class="notice hidden"></div>
+<label>Email</label><input id="email" type="email" autocomplete="username" placeholder="Email manzilingiz">
+<label>Parol</label><input id="password" type="password" autocomplete="current-password" placeholder="Parol">
+<button id="loginBtn" class="btn dark" style="width:100%;margin-top:16px">Kirish</button>
+</section>
+<section id="app" class="hidden">
+<div class="topline"><div><h2>Boshqaruv paneli</h2><div class="muted">Mahsulotlar va bosh sahifa kontentini boshqaring</div></div></div>
+<div class="stats"><div class="stat"><b id="productCount">—</b><span>Mahsulotlar</span></div><div class="stat"><b id="categoryCount">—</b><span>Kategoriyalar</span></div><div class="stat"><b id="highlightCount">—</b><span>Highlights</span></div></div>
+<div class="tabs">
+<button class="tab active" data-tab="products">Mahsulotlar</button>
+<button class="tab" data-tab="categories">Kategoriyalar</button>
+<button class="tab" data-tab="highlights">Highlights</button>
+<button class="tab" data-tab="banners">Bannerlar</button>
+</div>
+<div id="globalMsg" class="notice hidden"></div>
+<div class="layout">
+<div><div class="topline"><h2 id="listTitle">Mahsulotlar</h2><button class="btn secondary" id="refreshBtn">Yangilash ↻</button></div><div id="list" class="list"><div class="empty">Yuklanmoqda...</div></div></div>
+<aside class="editor">
+<h3 id="formTitle">Yangi mahsulot</h3><div class="muted" id="formHint">Ma’lumotlarni kiriting</div>
+<form id="editForm">
+<div id="fields"></div>
+<button class="btn dark" type="submit" id="saveBtn">Saqlash</button>
+<button class="btn secondary hidden" type="button" id="cancelBtn">Bekor qilish</button>
+</form>
+</aside>
+</div>
+</section>
+</main>
+<script>
+const SUPABASE_URL = "https://uazlxovtzekrvwxbnldb.supabase.co";
+const SUPABASE_KEY = "sb_publishable_ha3VUvvIXAQYMSw831l3GA_B6FR_v_Q";
+const ADMIN_ID = "9c4dc314-4d89-418d-a8cf-a6392602d70d";
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let activeTab="products", editingId=null, rows=[], categories=[], uploadUrl="";
+const $=id=>document.getElementById(id);
+const configs={
+ products:{title:"Mahsulotlar",table:"products",fields:[
+  ["name","Mahsulot nomi","text",true],["price","Narxi (so‘m)","number",true],["category","Kategoriya","text",true],["sizes","O‘lchamlar","text",false],["image_url","Rasm URL manzili","url",false]
+ ]},
+ categories:{title:"Kategoriyalar",table:"categories",fields:[
+  ["name","Kategoriya nomi","text",true],["slug","Slug (masalan: palto)","text",true],["image_url","Rasm URL manzili","url",false],["sort_order","Tartib raqami","number",false]
+ ]},
+ highlights:{title:"Highlights",table:"highlights",fields:[
+  ["title","Highlight nomi","text",true],["category_id","Bog‘lanadigan kategoriya","select",false],["image_url","Rasm URL manzili","url",false],["sort_order","Tartib raqami","number",false]
+ ]},
+ banners:{title:"Bannerlar",table:"banners",fields:[
+  ["title","Sarlavha","text",true],["subtitle","Qo‘shimcha matn","text",false],["image_url","Rasm URL manzili","url",false],["link_url","Bosilganda ochiladigan havola","url",false],["sort_order","Tartib raqami","number",false]
+ ]}
+};
+function msg(target,text,type=""){target.textContent=text;target.className="notice"+(type?" "+type:"");target.classList.remove("hidden")}
+function clearMsg(target){target.classList.add("hidden")}
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function imageFor(r){return r.image_url||""}
+function isActive(r){return r.is_active!==false}
+async function checkAdmin(){
+ const {data:{session}}=await db.auth.getSession();
+ if(!session){$("loginBox").classList.remove("hidden");$("app").classList.add("hidden");$("logout").classList.add("hidden");return}
+ if(session.user.id!==ADMIN_ID){await db.auth.signOut();msg($("loginMsg"),"Bu hisob admin sifatida ruxsat etilmagan.","error");$("loginBox").classList.remove("hidden");return}
+ $("loginBox").classList.add("hidden");$("app").classList.remove("hidden");$("logout").classList.remove("hidden");await loadAll();
+}
+$("loginBtn").onclick=async()=>{
+ const btn=$("loginBtn");btn.disabled=true;btn.textContent="Tekshirilmoqda...";
+ const {error}=await db.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});
+ btn.disabled=false;btn.textContent="Kirish";
+ if(error){msg($("loginMsg"),"Kirishda xatolik: "+error.message,"error");return}
+ await checkAdmin();
+};
+$("logout").onclick=async()=>{await db.auth.signOut();location.reload()};
+async function loadAll(){
+ clearMsg($("globalMsg"));
+ const names=["products","categories","highlights","banners"];
+ const results=await Promise.all(names.map(t=>db.from(t).select("*").order("created_at",{ascending:false}).limit(300)));
+ for(let i=0;i<names.length;i++){if(results[i].error){msg($("globalMsg"),names[i]+" jadvalini yuklab bo‘lmadi: "+results[i].error.message,"error");return}}
+ window.cache={};names.forEach((n,i)=>window.cache[n]=results[i].data||[]);
+ categories=window.cache.categories;
+ $("productCount").textContent=window.cache.products.length;
+ $("categoryCount").textContent=categories.length;
+ $("highlightCount").textContent=window.cache.highlights.length;
+ renderList();renderFields();
+}
+function renderList(){
+ rows=window.cache[configs[activeTab].table]||[];
+ $("listTitle").textContent=configs[activeTab].title;
+ if(!rows.length){$("list").innerHTML='<div class="empty">Hozircha ma’lumot yo‘q.</div>';return}
+ $("list").innerHTML=rows.map(r=>{
+  const title=r.name||r.title||"Nomsiz";
+  const meta=activeTab==="products"?`${r.price??""} so‘m · ${r.category??""}`:activeTab==="categories"?(r.slug||"") : activeTab==="highlights"?(categories.find(c=>c.id===r.category_id)?.name||"Kategoriya tanlanmagan"):(r.subtitle||"");
+  return `<article class="item"><img class="thumb" src="${esc(imageFor(r))}" onerror="this.style.visibility='hidden'" alt=""><div class="iteminfo"><b>${esc(title)}</b><small>${esc(meta)} · ${isActive(r)?"Faol":"Yashirilgan"}</small></div><div class="actions"><button class="btn secondary" data-edit="${esc(r.id)}">Tahrir</button><button class="btn danger" data-delete="${esc(r.id)}">O‘chirish</button></div></article>`
+ }).join("");
+ $("list").querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>editRow(b.dataset.edit));
+ $("list").querySelectorAll("[data-delete]").forEach(b=>b.onclick=()=>deleteRow(b.dataset.delete));
+}
+function renderFields(record={}){
+ const cfg=configs[activeTab];
+ $("formTitle").textContent=editingId?"Ma’lumotni tahrirlash":"Yangi "+cfg.title.toLowerCase();
+ $("formHint").textContent=editingId?"O‘zgarishlarni kiriting":"Ma’lumotlarni kiriting";
+ $("fields").innerHTML=cfg.fields.map(([key,label,type,required])=>{
+  let input="";
+  if(type==="select"){
+   input=`<select name="${key}"><option value="">Kategoriya tanlang</option>${categories.map(c=>`<option value="${esc(c.id)}" ${record[key]===c.id?"selected":""}>${esc(c.name)}</option>`).join("")}</select>`;
+  }else input=`<input name="${key}" type="${type}" ${required?"required":""} value="${esc(record[key]??"")}" ${type==="number"?'min="0"':''} placeholder="${esc(label)}">`;
+  return `<label>${esc(label)}${required?" *":""}</label>${input}`;
+ }).join("")+
+ `<label>Rasm yuklash (ixtiyoriy)</label><input id="imageFile" type="file" accept="image/*"><div class="small">Rasm tanlasangiz, Storage’ga yuklanadi va URL avtomatik yoziladi.</div><div class="checkrow"><input id="activeCheck" type="checkbox" ${record.is_active!==false?"checked":""}><label for="activeCheck">Saytda ko‘rsatish / faol</label></div>`;
+ $("cancelBtn").classList.toggle("hidden",!editingId);
+}
+function resetForm(){editingId=null;$("editForm").reset();renderFields();$("activeCheck").checked=true}
+function editRow(id){const r=rows.find(x=>String(x.id)===String(id));if(!r)return;editingId=id;renderFields(r);configs[activeTab].fields.forEach(([k])=>{const el=$("editForm").elements[k];if(el)el.value=r[k]??""});$("activeCheck").checked=r.is_active!==false;window.scrollTo({top:document.body.scrollHeight,behavior:"smooth"})}
+async function uploadImage(file){
+ const ext=(file.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"")||"jpg";
+ const path=`admin/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+ const {data,error}=await db.storage.from("clothing-images").upload(path,file,{upsert:false,contentType:file.type||"image/jpeg"});
+ if(error)throw error;
+ const {data:pub}=db.storage.from("clothing-images").getPublicUrl(data.path);
+ return pub.publicUrl;
+}
+$("editForm").onsubmit=async e=>{
+ e.preventDefault();const btn=$("saveBtn");btn.disabled=true;btn.textContent="Saqlanmoqda...";
+ try{
+  const cfg=configs[activeTab],payload={};
+  cfg.fields.forEach(([k,,type])=>{const el=$("editForm").elements[k];if(el){let v=el.value.trim();payload[k]=type==="number"?(v===""?0:Number(v)):v||null}});
+  const file=$("imageFile").files[0];
+  if(file)payload.image_url=await uploadImage(file);
+  payload.is_active=$("activeCheck").checked;
+  if(activeTab!=="products"&&!editingId)payload.sort_order=payload.sort_order??0;
+  let q=editingId?db.from(cfg.table).update(payload).eq("id",editingId):db.from(cfg.table).insert(payload);
+  const {error}=await q;if(error)throw error;
+  msg($("globalMsg"),"Saqlandi!","ok");resetForm();await loadAll();
+ }catch(err){msg($("globalMsg"),"Saqlashda xatolik: "+err.message,"error")}
+ finally{btn.disabled=false;btn.textContent="Saqlash"}
+};
+$("cancelBtn").onclick=resetForm;
+async function deleteRow(id){
+ if(!confirm("Ushbu ma’lumotni o‘chirishni xohlaysizmi?"))return;
+ const {error}=await db.from(configs[activeTab].table).delete().eq("id",id);
+ if(error){msg($("globalMsg"),"O‘chirishda xatolik: "+error.message,"error");return}
+ msg($("globalMsg"),"O‘chirildi.","ok");if(String(editingId)===String(id))resetForm();await loadAll();
+}
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelector(".tab.active").classList.remove("active");b.classList.add("active");activeTab=b.dataset.tab;resetForm();renderList();renderFields()});
+$("refreshBtn").onclick=loadAll;
+db.auth.onAuthStateChange(()=>{});
+checkAdmin();
+</script>
+</body>
+</html>
