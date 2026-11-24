@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#401b2b">
+<title>Yagona — Admin</title>
+<style>
+:root{--bg:#f7f4f2;--card:#fff;--ink:#261a20;--muted:#887b80;--wine:#702b45;--wine2:#91445f;--line:#eee5e8;--soft:#f5eaf0;--red:#b83d50;--green:#28764d}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
+.wrap{max-width:1050px;margin:auto;padding:18px 14px 60px}.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.brand{display:flex;gap:10px;align-items:center}.logo{background:var(--wine);color:white;width:42px;height:42px;border-radius:14px;display:grid;place-items:center;font:26px Georgia}
+.brand b{display:block}.brand small,.muted{color:var(--muted)}.hero{background:linear-gradient(120deg,#4a1e31,#91445f);color:white;padding:22px;border-radius:20px;margin-bottom:16px}
+.hero h1{font-size:24px;margin:5px 0}.hero p{margin:0;color:#f0dce4;font-size:13px}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:14px 0}.stat,.panel{background:white;border:1px solid var(--line);border-radius:17px;padding:15px}
+.stat small{color:var(--muted)}.stat strong{display:block;font-size:24px;margin-top:5px}.panel{margin:12px 0}
+.head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}.head h2{font-size:17px;margin:0}
+.btn{background:var(--wine);color:#fff;padding:11px 14px;border-radius:11px;font-weight:650}.btn.light{background:var(--soft);color:var(--wine)}.btn.red{background:#fae9ec;color:var(--red)}
+.btn:disabled{opacity:.5}.field{margin:10px 0}.field label{display:block;font-size:12px;color:#65575d;margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;padding:12px;border:1px solid var(--line);border-radius:11px;background:#fff;color:var(--ink)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.search{width:100%;padding:12px;border:1px solid var(--line);border-radius:11px;margin-bottom:10px}
+.items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.item{border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.photo{height:155px;background:#f4edf0;display:grid;place-items:center;color:#a18d95}.photo img{width:100%;height:100%;object-fit:cover}
+.info{padding:10px}.info b{display:block;font-size:14px}.price{font-weight:750;color:var(--wine);margin-top:5px}
+.meta{font-size:11px;color:var(--muted);margin-top:4px}.actions{display:flex;gap:6px;margin-top:9px}.actions button{flex:1;padding:8px 5px;border-radius:9px;font-size:12px}
+.empty{text-align:center;color:var(--muted);padding:25px}.hidden{display:none!important}.status{font-size:12px;padding:10px;border-radius:10px;background:#f6f0f2;color:#654653;margin-top:10px;white-space:pre-wrap}
+.status.ok{background:#eaf5ee;color:var(--green)}.status.err{background:#fff0f0;color:#a52d3c}
+.modal{position:fixed;inset:0;background:#180c12a8;display:none;align-items:end;justify-content:center;padding:12px;z-index:5}.modal.show{display:flex}
+.sheet{background:white;border-radius:20px 20px 15px 15px;width:100%;max-width:520px;padding:18px;max-height:92vh;overflow:auto}
+.sheet h2{font-size:18px;margin:0 0 12px}.preview{max-width:100%;max-height:170px;border-radius:10px;display:none;margin-top:8px}
+.foot{font-size:11px;color:var(--muted);text-align:center;margin-top:18px}
+.tabs{display:flex;gap:7px;overflow:auto;padding:4px 0 10px;margin:8px 0 12px}
+.tab{white-space:nowrap;background:#fff;border:1px solid var(--line);color:var(--wine);padding:10px 13px;border-radius:11px;font-weight:650}
+.tab.active{background:var(--wine);color:#fff}
+@media(min-width:760px){.stats{grid-template-columns:repeat(3,1fr)}.items{grid-template-columns:repeat(3,minmax(0,1fr))}.modal{align-items:center}.photo{height:190px}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<header class="top"><div class="brand"><div class="logo">Y</div><div><b>YAGONA ADMIN</b><small>Ayollar liboslari boshqaruvi</small></div></div><button id="logout" class="btn light hidden">Chiqish</button></header>
+<section class="hero"><small>SHAXSIY BOSHQARUV PANELI</small><h1>Xush kelibsiz</h1><p>Mahsulotlar, kategoriyalar, Highlights va bannerlarni boshqaring.</p></section>
+<section id="loginPanel" class="panel"><div class="head"><h2>Admin hisobiga kirish</h2></div><div class="field"><label>Email</label><input id="email" type="email" autocomplete="username" placeholder="Admin email"></div><div class="field"><label>Parol</label><input id="password" type="password" autocomplete="current-password" placeholder="Parol"></div><button id="login" class="btn" style="width:100%">Kirish</button><div id="loginStatus" class="status">Supabase admin hisobingiz bilan kiring.</div></section>
+<section id="app" class="hidden">
+<div class="stats"><div class="stat"><small>Jami mahsulot</small><strong id="total">0</strong></div><div class="stat"><small>Kategoriyalar</small><strong id="catCount">0</strong></div><div class="stat"><small>Baza holati</small><strong style="font-size:16px;color:var(--green)">Ulangan</strong></div></div>
+<nav class="tabs">
+<button class="tab active" data-tab="products">Mahsulotlar</button><button class="tab" data-tab="categories">Kategoriyalar</button><button class="tab" data-tab="highlights">Highlights</button><button class="tab" data-tab="banners">Bannerlar</button>
+</nav>
+<section id="view-products" class="panel tabview"><div class="head"><h2>Mahsulotlar</h2><button id="addProduct" class="btn">＋ Kiyim qo‘shish</button></div><input id="search" class="search" placeholder="Mahsulot qidirish..."><div id="products" class="items"><div class="empty">Yuklanmoqda...</div></div></section>
+<section id="view-categories" class="panel tabview hidden"><div class="head"><h2>Kategoriyalar</h2><button id="addCategory" class="btn">＋ Kategoriya</button></div><p class="muted">Kategoriya nomi va rasmi mijozlar ilovasida ko‘rinadi. O‘chirish o‘rniga yashirish ham mumkin.</p><div id="categories" class="items"></div></section>
+<section id="view-highlights" class="panel tabview hidden"><div class="head"><h2>Dumaloq Highlights</h2><button id="addHighlight" class="btn">＋ Highlight</button></div><p class="muted">Bosh sahifadagi dumaloq rasm, sarlavha va bosilganda ochiladigan kategoriya.</p><div id="highlights" class="items"></div></section>
+<section id="view-banners" class="panel tabview hidden"><div class="head"><h2>Bannerlar</h2><button id="addBanner" class="btn">＋ Banner</button></div><p class="muted">Bosh sahifadagi reklama bannerlari. Rasm, sarlavha va qo‘shimcha matnni boshqaring.</p><div id="banners" class="items"></div></section>
+</section>
+<div id="globalStatus" class="status hidden"></div><div class="foot">YAGONA • ADMIN PANEL</div></main>
+
+<div id="modal" class="modal"><form id="entityForm" class="sheet"><div class="head"><h2 id="formTitle">Yangi yozuv</h2><button type="button" id="close" class="btn light">✕</button></div><input id="entityId" type="hidden"><input id="entityType" type="hidden">
+<div id="productFields">
+<div class="field"><label>Kiyim nomi</label><input id="pname" maxlength="120" placeholder="Masalan: Klassik palto"></div>
+<div class="grid"><div class="field"><label>Narxi (so‘m)</label><input id="pprice" type="number" min="0" placeholder="350000"></div><div class="field"><label>Kategoriya</label><select id="pcat"></select></div></div>
+<div class="field"><label>Razmerlar (vergul bilan)</label><input id="psizes" placeholder="S, M, L, XL"></div></div>
+<div id="categoryFields" class="hidden"><div class="field"><label>Kategoriya nomi</label><input id="cname" maxlength="80" placeholder="Masalan: Palto"></div><div class="field"><label>Slug (lotincha, takrorlanmasin)</label><input id="cslug" maxlength="90" placeholder="palto"></div><div class="field"><label>Tartib raqami</label><input id="corder" type="number" value="0"></div></div>
+<div id="highlightFields" class="hidden"><div class="field"><label>Highlight nomi</label><input id="hname" maxlength="80" placeholder="Yangi kolleksiya"></div><div class="field"><label>Bog‘langan kategoriya</label><select id="hcategory"></select></div><div class="field"><label>Tartib raqami</label><input id="horder" type="number" value="0"></div></div>
+<div id="bannerFields" class="hidden"><div class="field"><label>Banner sarlavhasi</label><input id="btitle" maxlength="120" placeholder="Yangi kolleksiya"></div><div class="field"><label>Qo‘shimcha matn</label><textarea id="bsubtitle" rows="2" placeholder="Qisqa izoh"></textarea></div><div class="field"><label>Havola (ixtiyoriy)</label><input id="blink" placeholder="https://..."></div><div class="field"><label>Tartib raqami</label><input id="border" type="number" value="0"></div></div>
+<div class="field"><label>Rasm</label><input id="imageFile" type="file" accept="image/*"><img id="preview" class="preview"><small class="muted">Rasm clothing-images omboriga yuklanadi. 8 MB gacha.</small></div>
+<div class="field"><label><input id="active" type="checkbox" checked style="width:auto"> Saytda ko‘rsatish</label></div>
+<div class="grid"><button type="button" id="cancel" class="btn light">Bekor qilish</button><button id="save" class="btn" type="submit">Saqlash</button></div><div id="formStatus" class="status hidden"></div></form></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL='https://uazlxovtzekrvwxbnldb.supabase.co';
+const SUPABASE_ANON_KEY='sb_publishable_ha3VUvvIXAQYMSw831l3GA_B6FR_v_Q';
+const ADMIN_ID='9c4dc314-4d89-418d-a8cf-a6392602d70d';
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+let products=[],categories=[],highlights=[],banners=[],selectedFile=null,currentType='product',currentImage=null;
+const $=id=>document.getElementById(id);
+const money=n=>Number(n||0).toLocaleString('uz-UZ')+' so‘m';
+function status(id,msg,type=''){const el=$(id);el.textContent=msg;el.className='status '+type;}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function slugify(s){return s.toLowerCase().trim().replace(/o‘|o'|oʻ/g,'o').replace(/g‘|g'|gʻ/g,'g').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');}
+function switchTab(name){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));document.querySelectorAll('.tabview').forEach(v=>v.classList.toggle('hidden',v.id!=='view-'+name));}
+document.querySelector('.tabs').onclick=e=>{const b=e.target.closest('[data-tab]');if(b)switchTab(b.dataset.tab);};
+async function loadAll(){
+ status('globalStatus','Ma’lumotlar yuklanmoqda...');$('globalStatus').classList.remove('hidden');
+ const results=await Promise.all([
+  db.from('products').select('*').order('created_at',{ascending:false}),
+  db.from('categories').select('*').order('sort_order',{ascending:true}),
+  db.from('highlights').select('*').order('sort_order',{ascending:true}),
+  db.from('banners').select('*').order('sort_order',{ascending:true})
+ ]);
+ const labels=['Mahsulotlar','Kategoriyalar','Highlights','Bannerlar'];
+ for(let i=0;i<results.length;i++){if(results[i].error){status('globalStatus',labels[i]+' yuklanmadi: '+results[i].error.message,'err');return;}}
+ products=results[0].data||[];categories=results[1].data||[];highlights=results[2].data||[];banners=results[3].data||[];
+ $('total').textContent=products.length;$('catCount').textContent=categories.length;
+ renderProducts();renderCategories();renderHighlights();renderBanners();fillCategorySelects();
+ $('globalStatus').classList.add('hidden');
+}
+function cardImage(url){return url?`<img src="${esc(url)}" alt="">`:'Rasm yo‘q';}
+function actionButtons(type,id,active){return `<div class="actions"><button class="btn light" data-edit="${type}" data-id="${esc(id)}">Tahrir</button><button class="btn light" data-toggle="${type}" data-id="${esc(id)}" data-active="${active}">${active?'Yashirish':'Ko‘rsatish'}</button><button class="btn red" data-delete="${type}" data-id="${esc(id)}">O‘chirish</button></div>`;}
+function renderProducts(){const q=$('search').value.toLowerCase();const list=products.filter(p=>(p.name||'').toLowerCase().includes(q));$('products').innerHTML=list.length?list.map(p=>`<article class="item"><div class="photo">${cardImage(p.image_url)}</div><div class="info"><b>${esc(p.name)}</b><div class="price">${money(p.price)}</div><div class="meta">${esc(p.category||'')} · ${esc(Array.isArray(p.sizes)?p.sizes.join(', '):p.sizes||'')}</div><div class="actions"><button class="btn light" data-edit="product" data-id="${esc(p.id)}">Tahrir</button><button class="btn red" data-delete="product" data-id="${esc(p.id)}">O‘chirish</button></div></div></article>`).join(''):'<div class="empty">Hozircha mahsulot yo‘q.</div>';}
+function renderCategories(){$('categories').innerHTML=categories.length?categories.map(x=>`<article class="item"><div class="photo">${cardImage(x.image_url)}</div><div class="info"><b>${esc(x.name)}</b><div class="meta">${esc(x.slug)} · Tartib: ${x.sort_order} · ${x.is_active?'Faol':'Yashirin'}</div>${actionButtons('category',x.id,x.is_active)}</div></article>`).join(''):'<div class="empty">Kategoriya yo‘q.</div>';}
+function renderHighlights(){$('highlights').innerHTML=highlights.length?highlights.map(x=>{const c=categories.find(z=>z.id===x.category_id);return `<article class="item"><div class="photo">${cardImage(x.image_url)}</div><div class="info"><b>${esc(x.title)}</b><div class="meta">${esc(c?.name||'Kategoriya tanlanmagan')} · Tartib: ${x.sort_order} · ${x.is_active?'Faol':'Yashirin'}</div>${actionButtons('highlight',x.id,x.is_active)}</div></article>`}).join(''):'<div class="empty">Highlight hali qo‘shilmagan.</div>';}
+function renderBanners(){$('banners').innerHTML=banners.length?banners.map(x=>`<article class="item"><div class="photo">${cardImage(x.image_url)}</div><div class="info"><b>${esc(x.title||'Sarlavhasiz banner')}</b><div class="meta">${esc(x.subtitle||'')} · Tartib: ${x.sort_order} · ${x.is_active?'Faol':'Yashirin'}</div>${actionButtons('banner',x.id,x.is_active)}</div></article>`).join(''):'<div class="empty">Banner hali qo‘shilmagan.</div>';}
+function fillCategorySelects(){const opts=categories.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');$('hcategory').innerHTML='<option value="">Kategoriya tanlang</option>'+opts;$('pcat').innerHTML=categories.map(c=>`<option>${esc(c.name)}</option>`).join('')||'<option>Ko‘ylak</option>';}
+function openForm(type,record=null){
+ $('entityForm').reset();selectedFile=null;currentType=type;currentImage=record?.image_url||null;
+ $('entityId').value=record?.id||'';$('entityType').value=type;
+ ['productFields','categoryFields','highlightFields','bannerFields'].forEach(id=>$(id).classList.toggle('hidden',id!==({product:'productFields',category:'categoryFields',highlight:'highlightFields',banner:'bannerFields'}[type])));
+ $('active').checked=record?.is_active??true;$('preview').style.display=record?.image_url?'block':'none';$('preview').src=record?.image_url||'';
+ const names={product:'Mahsulot',category:'Kategoriya',highlight:'Highlight',banner:'Banner'};
+ $('formTitle').textContent=(record?'Tahrirlash: ':'Yangi ')+names[type];
+ if(type==='product'){ $('pname').value=record?.name||'';$('pprice').value=record?.price||'';$('pcat').value=record?.category||categories[0]?.name||'Ko‘ylak';$('psizes').value=Array.isArray(record?.sizes)?record.sizes.join(', '):(record?.sizes||'');}
+ if(type==='category'){$('cname').value=record?.name||'';$('cslug').value=record?.slug||'';$('corder').value=record?.sort_order??categories.length+1;}
+ if(type==='highlight'){$('hname').value=record?.title||'';$('hcategory').value=record?.category_id||'';$('horder').value=record?.sort_order??highlights.length+1;}
+ if(type==='banner'){$('btitle').value=record?.title||'';$('bsubtitle').value=record?.subtitle||'';$('blink').value=record?.link_url||'';$('border').value=record?.sort_order??banners.length+1;}
+ $('formStatus').classList.add('hidden');$('modal').classList.add('show');
+}
+function closeForm(){$('modal').classList.remove('show');}
+$('addProduct').onclick=()=>openForm('product');$('addCategory').onclick=()=>openForm('category');$('addHighlight').onclick=()=>openForm('highlight');$('addBanner').onclick=()=>openForm('banner');
+$('close').onclick=closeForm;$('cancel').onclick=closeForm;$('search').oninput=renderProducts;
+$('cname').addEventListener('input',()=>{if(!$('entityId').value)$('cslug').value=slugify($('cname').value);});
+$('imageFile').onchange=e=>{selectedFile=e.target.files[0]||null;if(selectedFile){$('preview').src=URL.createObjectURL(selectedFile);$('preview').style.display='block';}};
+async function uploadImage(){if(!selectedFile)return currentImage;if(!selectedFile.type.startsWith('image/'))throw new Error('Faqat rasm faylini tanlang.');if(selectedFile.size>8*1024*1024)throw new Error('Rasm 8 MB dan kichik bo‘lsin.');const ext=(selectedFile.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';const path=crypto.randomUUID()+'.'+ext;const {error}=await db.storage.from('clothing-images').upload(path,selectedFile,{upsert:false,contentType:selectedFile.type});if(error)throw error;return db.storage.from('clothing-images').getPublicUrl(path).data.publicUrl;}
+$('entityForm').onsubmit=async e=>{
+ e.preventDefault();$('save').disabled=true;status('formStatus','Saqlanmoqda...');$('formStatus').classList.remove('hidden');
+ try{
+  const type=currentType,id=$('entityId').value;let row={},table='';
+  if(type==='product'){table='products';row={name:$('pname').value.trim(),price:Number($('pprice').value),category:$('pcat').value,sizes:$('psizes').value.split(',').map(s=>s.trim()).filter(Boolean),image_url:await uploadImage()};}
+  if(type==='category'){table='categories';const name=$('cname').value.trim(),slug=slugify($('cslug').value);if(!name||!slug)throw new Error('Kategoriya nomi va slug kiriting.');row={name,slug,sort_order:Number($('corder').value)||0,is_active:$('active').checked,image_url:await uploadImage()};}
+  if(type==='highlight'){table='highlights';if(!$('hname').value.trim())throw new Error('Highlight nomini kiriting.');row={title:$('hname').value.trim(),category_id:$('hcategory').value||null,sort_order:Number($('horder').value)||0,is_active:$('active').checked,image_url:await uploadImage()};}
+  if(type==='banner'){table='banners';row={title:$('btitle').value.trim(),subtitle:$('bsubtitle').value.trim(),link_url:$('blink').value.trim()||null,sort_order:Number($('border').value)||0,is_active:$('active').checked,image_url:await uploadImage()};}
+  if(type==='product'&&row.image_url===null)delete row.image_url;
+  const result=id?await db.from(table).update(row).eq('id',id):await db.from(table).insert(row);
+  if(result.error)throw result.error;
+  closeForm();await loadAll();
+ }catch(err){status('formStatus','Xatolik: '+(err.message||String(err)),'err');}
+ finally{$('save').disabled=false;}
+};
+document.addEventListener('click',async e=>{
+ const edit=e.target.closest('[data-edit]'),del=e.target.closest('[data-delete]'),toggle=e.target.closest('[data-toggle]');
+ if(edit){const type=edit.dataset.edit,id=edit.dataset.id;const source={product:products,category:categories,highlight:highlights,banner:banners}[type];const rec=source.find(x=>String(x.id)===id);if(rec)openForm(type,rec);}
+ if(toggle){const type=toggle.dataset.toggle,id=toggle.dataset.id,table={category:'categories',highlight:'highlights',banner:'banners'}[type];const {error}=await db.from(table).update({is_active:toggle.dataset.active!=='true'}).eq('id',id);if(error){alert('Holatni o‘zgartirish xatosi: '+error.message);return;}await loadAll();}
+ if(del){const type=del.dataset.delete,id=del.dataset.id,table={product:'products',category:'categories',highlight:'highlights',banner:'banners'}[type];if(type==='category'&&highlights.some(h=>h.category_id===id)){if(!confirm('Bu kategoriya highlight bilan bog‘langan. O‘chirilsa, highlightdagi kategoriya aloqasi uziladi. Davom etilsinmi?'))return;}else if(!confirm('Ushbu yozuv o‘chirilsinmi?'))return;const {error}=await db.from(table).delete().eq('id',id);if(error){alert('O‘chirish xatosi: '+error.message);return;}await loadAll();}
+});
+$('login').onclick=async()=>{status('loginStatus','Kirilmoqda...');const {error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){status('loginStatus','Kirish xatosi: '+error.message,'err');return;}await checkSession();};
+$('logout').onclick=async()=>{await db.auth.signOut();$('app').classList.add('hidden');$('loginPanel').classList.remove('hidden');$('logout').classList.add('hidden');};
+async function checkSession(){const {data:{session}}=await db.auth.getSession();if(session){$('loginPanel').classList.add('hidden');$('app').classList.remove('hidden');$('logout').classList.remove('hidden');await loadAll();}else{$('loginPanel').classList.remove('hidden');$('app').classList.add('hidden');$('logout').classList.add('hidden');}}
+db.auth.onAuthStateChange(()=>{setTimeout(checkSession,0)});checkSession();
+</script>
+</body></html>
